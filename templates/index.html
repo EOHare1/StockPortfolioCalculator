@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Portfolio Calculator</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --light-gray: #f9f9f9;
+            --border-color: #ddd;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--light-gray);
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+
+        h2, h3, h4 {
+            color: var(--primary-color);
+        }
+        
+        h2, h3 {
+            text-align: center;
+        }
+
+        .form-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            flex: 1;
+            margin-right: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px 0;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.5s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .card {
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .value {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table th {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 10px;
+            text-align: left;
+        }
+
+        table td {
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+        }
+
+        table tr:nth-child(even) {
+            background-color: var(--light-gray);
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+            display: block;
+            margin: 20px auto 0;
+        }
+
+        .legend {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .legend li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend li .color-box {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            margin-right: 5px;
+            display: inline-block;
+        }
+        
+        .error {
+            color: red;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .algorithm-description {
+            margin-top: 10px;
+            color: #555;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .metric-item {
+            padding: 10px;
+            border-radius: 5px;
+            background-color: var(--light-gray);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Stock Portfolio Calculator</h2>
+
+        <!-- Error Message Display -->
+        {% if error_message %}
+        <div class="error">{{ error_message }}</div>
+        {% endif %}
+
+        <form method="POST" action="/run_stock_yields" onsubmit="showLoading()">
+            <div id="stocks-input">
+                <div class="form-row">
+                    <input type="text" name="symbols[]" placeholder="Stock Symbol" required>
+                    <input type="text" name="shares[]" placeholder="Number of Shares" required>
+                </div>
+            </div>
+            <div>
+                <button type="button" onclick="addStock()">Add Stock</button>
+                <button type="submit">Calculate</button>
+                <button type="button" onclick="loadSP500()">Load SP500 Symbols</button>
+            </div>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Calculating results, please wait...</p>
+            <p>Our algorithm optimizes your portfolio with high dividend yields, growth potential, and industry diversification.</p>
+        </div>
+
+        <!-- Results Section -->
+        {% if dividends %}
+            <h3>Portfolio Analysis</h3>
+
+            <!-- Key Metrics -->
+            <div class="card">
+                <h4>Key Portfolio Metrics</h4>
+                <div class="metrics">
+                    <div class="metric-item">
+                        <div>Average Yield</div>
+                        <div class="value">{{ average_yield }}%</div>
+                    </div>
+                    <div class="metric-item">
+                        <div>Dividend Income</div>
+                        <div class="value">${{ total_dividend_income }}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div>5 Year Historical Growth</div>
+                        <div class="value">{{ combined_growth }}%</div>
+                    </div>
+                    <div class="metric-item">
+                        <div>Current Value</div>
+                        <div class="value">${{ total_current_value }}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div>5 Year Projected Value</div>
+                        <div class="value">${{ total_projected_value }}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div>5 Year Projected Growth</div>
+                        <div class="value">{{ combined_projected_growth }}%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Details -->
+            <div class="card">
+                <h4>Stock Details</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Stock</th>
+                            <th>Yield</th>
+                            <th>Income</th>
+                            <th>Industry</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for symbol, info in dividends.items() %}
+                        <tr>
+                            <td>{{ symbol }}</td>
+                            <td>{{ info['dividend_yield_percent'] }}%</td>
+                            <td>${{ info['dividend_income'] }}</td>
+                            <td>{{ info['industry'] }}</td>
+                            <td>${{ info['stock_value'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Historical Performance Chart -->
+            <div class="card">
+                <h4>Historical Performance</h4>
+                <canvas id="performanceChart"></canvas>
+            </div>
+
+            <!-- Industry Breakdown -->
+            <div class="card">
+                <h4>Industry Breakdown</h4>
+                <ul class="legend" id="industryLegend"></ul>
+                <canvas id="industryChart"></canvas>
+            </div>
+
+            <!-- Suggested Stocks -->
+            <div class="card">
+                <h4>Suggested Additional Stocks</h4>
+                <p class="algorithm-description">Our algorithm suggests stocks to optimize your portfolio with dividend yields, growth, and industry diversification.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Stock</th>
+                            <th>Industry</th>
+                            <th>Dividend Yield</th>
+                            <th>Projected Growth</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock, industry, category in suggestions %}
+                        <tr>
+                            <td>{{ stock }}</td>
+                            <td>{{ industry }}</td>
+                            <td>{{ suggested_info[stock]['dividend_yield'] }}%</td>
+                            <td>{{ suggested_info[stock]['growth_info'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function addStock() {
+            const stocksInput = document.getElementById("stocks-input");
+            const newRow = document.createElement("div");
+            newRow.className = "form-row";
+            newRow.innerHTML = `
+                <input type="text" name="symbols[]" placeholder="Stock Symbol" required>
+                <input type="text" name="shares[]" placeholder="Number of Shares" required>
+            `;
+            stocksInput.appendChild(newRow);
+        }
+
+        function showLoading() {
+            document.getElementById("loading").style.display = "block";
+        }
+
+        function loadSP500() {
+            showLoading();
+            fetch('/sp500')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Create a dropdown for selecting symbols
+                        const symbolsSelect = document.createElement('select');
+                        symbolsSelect.id = 'sp500Symbols';
+                        symbolsSelect.style.padding = '10px';
+                        symbolsSelect.style.margin = '10px 0';
+                        symbolsSelect.style.width = '100%';
+                        
+                        // Add placeholder
+                        const placeholder = document.createElement('option');
+                        placeholder.value = '';
+                        placeholder.textContent = `-- Select from S&P 500 Symbols --`;
+                        placeholder.selected = true;
+                        symbolsSelect.appendChild(placeholder);
+                        
+                        // Add all symbols
+                        data.symbols.forEach(symbol => {
+                            const option = document.createElement('option');
+                            option.value = symbol;
+                            option.textContent = symbol;
+                            symbolsSelect.appendChild(option);
+                        });
+                        
+                        // Add dropdown to page
+                        document.querySelector('.container').insertAdjacentElement('afterbegin', symbolsSelect);
+                        
+                        // Add event listener to add selected symbol
+                        symbolsSelect.addEventListener('change', function() {
+                            if (this.value) {
+                                // Get the first empty symbol input or add a new row
+                                let emptyInput = Array.from(document.querySelectorAll('input[name="symbols[]"]'))
+                                    .find(input => !input.value);
+                                
+                                if (!emptyInput) {
+                                    addStock();
+                                    emptyInput = document.querySelector('input[name="symbols[]"]:last-of-type');
+                                }
+                                
+                                emptyInput.value = this.value;
+                                this.selectedIndex = 0; // Reset to placeholder
+                            }
+                        });
+                        
+                        document.getElementById("loading").style.display = "none";
+                    } else {
+                        alert('Error loading S&P 500 symbols: ' + data.message);
+                        document.getElementById("loading").style.display = "none";
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error);
+                    document.getElementById("loading").style.display = "none";
+                });
+        }
+
+        // Function to generate colors for charts
+        function generateColors(count) {
+            const colors = [];
+            const baseColors = [
+                '#4CAF50', '#2196F3', '#FFC107', '#E91E63', '#9C27B0',
+                '#FF5722', '#607D8B', '#795548', '#3F51B5', '#CDDC39'
+            ];
+            
+            for (let i = 0; i < count; i++) {
+                colors.push(baseColors[i % baseColors.length]);
+            }
+            
+            return colors;
+        }
+
+        // Render pie chart for industry breakdown
+        {% if industry_breakdown %}
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPieChart({{ industry_breakdown|tojson|safe }});
+            renderPerformanceChart({{ chart_data|tojson|safe }});
+        });
+        {% endif %}
+
+        function renderPieChart(data) {
+            const canvas = document.getElementById('industryChart');
+            const ctx = canvas.getContext('2d');
+            const legend = document.getElementById('industryLegend');
+            
+            // Clear existing content
+            legend.innerHTML = '';
+            
+            // Set canvas dimensions
+            canvas.width = canvas.clientWidth * 2;
+            canvas.height = canvas.clientHeight * 2;
+            const radius = Math.min(canvas.width, canvas.height) / 4;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            // Extract data
+            const industries = Object.keys(data);
+            const percentages = industries.map(industry => data[industry]);
+            const total = percentages.reduce((sum, value) => sum + value, 0);
+
+            // Generate colors
+            const colors = generateColors(industries.length);
+
+            // Draw pie chart
+            let startAngle = 0;
+            industries.forEach((industry, index) => {
+                const percentage = (percentages[index] / total * 100).toFixed(1);
+                const sliceAngle = (percentages[index] / total) * (2 * Math.PI);
+
+                // Draw slice
+                ctx.fillStyle = colors[index];
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw label
+                const middleAngle = startAngle + sliceAngle / 2;
+                const labelX = centerX + Math.cos(middleAngle) * (radius * 0.7);
+                const labelY = centerY + Math.sin(middleAngle) * (radius * 0.7);
+
+                // Add to legend
+                const legendItem = document.createElement('li');
+                legendItem.innerHTML = `
+                    <span class="color-box" style="background-color: ${colors[index]};"></span>
+                    ${industry}: ${percentage}%
+                `;
+                legend.appendChild(legendItem);
+
+                startAngle += sliceAngle;
+            });
+        }
+
+        function renderPerformanceChart(data) {
+            if (!data || !data.labels || !data.datasets) return;
+            
+            const canvas = document.getElementById('performanceChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas dimensions
+            canvas.width = canvas.clientWidth * 2;
+            canvas.height = canvas.clientHeight * 2;
+            
+            // Calculate chart area
+            const chartArea = {
+                left: 60,
+                top: 20,
+                right: canvas.width - 20,
+                bottom: canvas.height - 40
+            };
+            
+            const chartWidth = chartArea.right - chartArea.left;
+            const chartHeight = chartArea.bottom - chartArea.top;
+            
+            // Find min and max values
+            let minValue = Number.MAX_VALUE;
+            let maxValue = Number.MIN_VALUE;
+            
+            data.datasets.forEach(dataset => {
+                dataset.data.forEach(value => {
+                    if (value !== null && value !== undefined) {
+                        minValue = Math.min(minValue, value);
+                        maxValue = Math.max(maxValue, value);
+                    }
+                });
+            });
+            
+            // Add padding to min/max
+            const padding = (maxValue - minValue) * 0.1;
+            minValue = Math.max(0, minValue - padding);
+            maxValue = maxValue + padding;
+            
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(chartArea.left, chartArea.top);
+            ctx.lineTo(chartArea.left, chartArea.bottom);
+            ctx.lineTo(chartArea.right, chartArea.bottom);
+            ctx.stroke();
+            
+            // Draw labels
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            
+            // Draw X-axis labels (dates)
+            const xStep = chartWidth / (data.labels.length - 1);
+            data.labels.forEach((label, i) => {
+                if (i % Math.ceil(data.labels.length / 10) === 0 || i === data.labels.length - 1) {
+                    const x = chartArea.left + i * xStep;
+                    ctx.fillText(label, x, chartArea.bottom + 15);
+                }
+            });
+            
+            // Draw Y-axis labels (values)
+            const yStep = chartHeight / 5;
+            for (let i = 0; i <= 5; i++) {
+                const y = chartArea.bottom - i * yStep;
+                const value = minValue + (i / 5) * (maxValue - minValue);
+                ctx.textAlign = 'right';
+                ctx.fillText('$' + value.toFixed(2), chartArea.left - 10, y + 4);
+                
+                // Draw grid line
+                ctx.strokeStyle = '#ddd';
+                ctx.beginPath();
+                ctx.moveTo(chartArea.left, y);
+                ctx.lineTo(chartArea.right, y);
+                ctx.stroke();
+            }
+            
+            // Draw data lines
+            data.datasets.forEach(dataset => {
+                const points = [];
+                
+                dataset.data.forEach((value, i) => {
+                    if (value !== null && value !== undefined) {
+                        const x = chartArea.left + i * xStep;
+                        const normalizedValue = (value - minValue) / (maxValue - minValue);
+                        const y = chartArea.bottom - normalizedValue * chartHeight;
+                        points.push({ x, y });
+                    }
+                });
+                
+                if (points.length > 0) {
+                    // Draw line
+                    ctx.strokeStyle = dataset.borderColor;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(points[0].x, points[0].y);
+                    
+                    for (let i = 1; i < points.length; i++) {
+                        ctx.lineTo(points[i].x, points[i].y);
+                    }
+                    
+                    ctx.stroke();
+                    
+                    // Draw points
+                    points.forEach(point => {
+                        ctx.fillStyle = dataset.borderColor;
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                }
+            });
+            
+            // Draw legend
+            const legendY = chartArea.top + 10;
+            let legendX = chartArea.left + 10;
+            
+            data.datasets.forEach((dataset, i) => {
+                const textWidth = ctx.measureText(dataset.label).width;
+                
+                // Draw color box
+                ctx.fillStyle = dataset.borderColor;
+                ctx.fillRect(legendX, legendY - 8, 10, 10);
+                
+                // Draw label
+                ctx.fillStyle = '#333';
+                ctx.textAlign = 'left';
+                ctx.fillText(dataset.label, legendX + 15, legendY);
+                
+                legendX += textWidth + 40;
+            });
+        }
+    </script>
+</body>
+</html>
