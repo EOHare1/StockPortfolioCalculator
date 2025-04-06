@@ -511,4 +511,7 @@ if __name__ == "__main__":
         logger.error(f"Error during preloading: {e}")
     
     # Start the app
-    app.run(debug=True)
+    #app.run(debug=True)
+    
+    # Use the port that Render provides
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
