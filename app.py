@@ -241,7 +241,7 @@ def analyze_portfolio(symbols, shares):
         
         # Calculate metrics
         stock_value = price * share_count
-        dividend_income = dividend_yield * stock_value
+        dividend_income = dividend_yield * stock_value * (1/100)
         
         # Add to totals
         total_value += stock_value
