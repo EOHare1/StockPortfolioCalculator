@@ -21,12 +21,13 @@
         }
 
         .container {
+            width: 95%;
             max-width: 800px;
-            margin: 40px auto;
+            margin: 20px auto;
             background-color: #fff;
             border-radius: 10px;
             box-shadow: var(--shadow);
-            padding: 20px;
+            padding: 15px;
         }
 
         h2, h3, h4 {
@@ -39,25 +40,65 @@
 
         .form-row {
             display: flex;
+            flex-direction: column;
             margin-bottom: 10px;
         }
 
+        @media (min-width: 768px) {
+            .form-row {
+                flex-direction: row;
+            }
+            
+            .container {
+                padding: 20px;
+                margin: 40px auto;
+            }
+        }
+
         input[type="text"] {
-            padding: 10px;
+            padding: 12px;
             flex: 1;
-            margin-right: 5px;
+            margin-bottom: 8px;
             border: 1px solid var(--border-color);
             border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 768px) {
+            input[type="text"] {
+                margin-right: 5px;
+                margin-bottom: 0;
+                width: auto;
+            }
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
         }
 
         button {
-            padding: 10px 20px;
+            padding: 12px 15px;
             background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin: 10px 5px 0;
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
+            font-size: 14px;
+        }
+
+        @media (min-width: 768px) {
+            button {
+                flex: 0 0 auto;
+                font-size: 16px;
+                padding: 10px 20px;
+            }
         }
 
         button:hover {
@@ -89,9 +130,10 @@
             background-color: #fff;
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 20px;
+            padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
         }
 
         .value {
@@ -103,6 +145,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            min-width: 450px;
         }
 
         table th {
@@ -110,6 +153,7 @@
             color: white;
             padding: 8px 10px;
             text-align: left;
+            white-space: nowrap;
         }
 
         table td {
@@ -123,9 +167,15 @@
 
         canvas {
             width: 100%;
-            height: 300px;
+            height: 250px;
             display: block;
             margin: 20px auto 0;
+        }
+
+        @media (min-width: 768px) {
+            canvas {
+                height: 300px;
+            }
         }
 
         .legend {
@@ -134,17 +184,26 @@
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
+            justify-content: center;
+            margin-bottom: 10px;
         }
 
         .legend li {
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin: 3px;
+            font-size: 13px;
+        }
+
+        @media (min-width: 768px) {
+            .legend li {
+                font-size: 14px;
+            }
         }
 
         .legend li .color-box {
-            width: 15px;
-            height: 15px;
+            width: 12px;
+            height: 12px;
             border-radius: 3px;
             margin-right: 5px;
             display: inline-block;
@@ -160,18 +219,41 @@
         .algorithm-description {
             margin-top: 10px;
             color: #555;
+            font-size: 14px;
         }
         
         .metrics {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 10px;
+        }
+        
+        @media (min-width: 768px) {
+            .metrics {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
         }
         
         .metric-item {
             padding: 10px;
             border-radius: 5px;
             background-color: var(--light-gray);
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .metric-item .value {
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        
+        select {
+            padding: 12px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin: 10px 0;
+            background-color: white;
         }
     </style>
 </head>
@@ -191,10 +273,10 @@
                     <input type="text" name="shares[]" placeholder="Number of Shares" required>
                 </div>
             </div>
-            <div>
+            <div class="button-group">
                 <button type="button" onclick="addStock()">Add Stock</button>
                 <button type="submit">Calculate</button>
-                <button type="button" onclick="loadSP500()">Load SP500 Symbols</button>
+                <button type="button" onclick="loadSP500()">Load SP500</button>
             </div>
         </form>
 
@@ -221,7 +303,7 @@
                         <div class="value">${{ total_dividend_income }}</div>
                     </div>
                     <div class="metric-item">
-                        <div>5 Year Historical Growth</div>
+                        <div>5 Year Growth</div>
                         <div class="value">{{ combined_growth }}%</div>
                     </div>
                     <div class="metric-item">
@@ -229,11 +311,11 @@
                         <div class="value">${{ total_current_value }}</div>
                     </div>
                     <div class="metric-item">
-                        <div>5 Year Projected Value</div>
+                        <div>5 Year Projected</div>
                         <div class="value">${{ total_projected_value }}</div>
                     </div>
                     <div class="metric-item">
-                        <div>5 Year Projected Growth</div>
+                        <div>Projected Growth</div>
                         <div class="value">{{ combined_projected_growth }}%</div>
                     </div>
                 </div>
@@ -242,28 +324,30 @@
             <!-- Stock Details -->
             <div class="card">
                 <h4>Stock Details</h4>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Stock</th>
-                            <th>Yield</th>
-                            <th>Income</th>
-                            <th>Industry</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for symbol, info in dividends.items() %}
-                        <tr>
-                            <td>{{ symbol }}</td>
-                            <td>{{ info['dividend_yield_percent'] }}%</td>
-                            <td>${{ info['dividend_income'] }}</td>
-                            <td>{{ info['industry'] }}</td>
-                            <td>${{ info['stock_value'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Stock</th>
+                                <th>Yield</th>
+                                <th>Income</th>
+                                <th>Industry</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for symbol, info in dividends.items() %}
+                            <tr>
+                                <td>{{ symbol }}</td>
+                                <td>{{ info['dividend_yield_percent'] }}%</td>
+                                <td>${{ info['dividend_income'] }}</td>
+                                <td>{{ info['industry'] }}</td>
+                                <td>${{ info['stock_value'] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Historical Performance Chart -->
@@ -284,26 +368,28 @@
                 <h4>Suggested Additional Stocks</h4>
                 <p class="algorithm-description">Our algorithm suggests stocks to optimize your portfolio with dividend yields, growth, and industry diversification.</p>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Stock</th>
-                            <th>Industry</th>
-                            <th>Dividend Yield</th>
-                            <th>Projected Growth</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for stock, industry, category in suggestions %}
-                        <tr>
-                            <td>{{ stock }}</td>
-                            <td>{{ industry }}</td>
-                            <td>{{ suggested_info[stock]['dividend_yield'] }}%</td>
-                            <td>{{ suggested_info[stock]['growth_info'] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Stock</th>
+                                <th>Industry</th>
+                                <th>Yield</th>
+                                <th>Growth</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock, industry, category in suggestions %}
+                            <tr>
+                                <td>{{ stock }}</td>
+                                <td>{{ industry }}</td>
+                                <td>{{ suggested_info[stock]['dividend_yield'] }}%</td>
+                                <td>{{ suggested_info[stock]['growth_info'] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         {% endif %}
     </div>
@@ -333,9 +419,6 @@
                         // Create a dropdown for selecting symbols
                         const symbolsSelect = document.createElement('select');
                         symbolsSelect.id = 'sp500Symbols';
-                        symbolsSelect.style.padding = '10px';
-                        symbolsSelect.style.margin = '10px 0';
-                        symbolsSelect.style.width = '100%';
                         
                         // Add placeholder
                         const placeholder = document.createElement('option');
@@ -353,7 +436,7 @@
                         });
                         
                         // Add dropdown to page
-                        document.querySelector('.container').insertAdjacentElement('afterbegin', symbolsSelect);
+                        document.querySelector('form').insertAdjacentElement('afterbegin', symbolsSelect);
                         
                         // Add event listener to add selected symbol
                         symbolsSelect.addEventListener('change', function() {
@@ -404,23 +487,35 @@
         document.addEventListener('DOMContentLoaded', function() {
             renderPieChart({{ industry_breakdown|tojson|safe }});
             renderPerformanceChart({{ chart_data|tojson|safe }});
+            
+            // Adjust canvas size when window is resized
+            window.addEventListener('resize', function() {
+                renderPieChart({{ industry_breakdown|tojson|safe }});
+                renderPerformanceChart({{ chart_data|tojson|safe }});
+            });
         });
         {% endif %}
 
         function renderPieChart(data) {
             const canvas = document.getElementById('industryChart');
+            if (!canvas) return;
+            
             const ctx = canvas.getContext('2d');
             const legend = document.getElementById('industryLegend');
             
             // Clear existing content
             legend.innerHTML = '';
             
-            // Set canvas dimensions
-            canvas.width = canvas.clientWidth * 2;
-            canvas.height = canvas.clientHeight * 2;
-            const radius = Math.min(canvas.width, canvas.height) / 4;
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
+            // Set canvas dimensions based on device pixel ratio
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            const radius = Math.min(rect.width, rect.height) / 3;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
 
             // Extract data
             const industries = Object.keys(data);
@@ -444,11 +539,6 @@
                 ctx.closePath();
                 ctx.fill();
 
-                // Draw label
-                const middleAngle = startAngle + sliceAngle / 2;
-                const labelX = centerX + Math.cos(middleAngle) * (radius * 0.7);
-                const labelY = centerY + Math.sin(middleAngle) * (radius * 0.7);
-
                 // Add to legend
                 const legendItem = document.createElement('li');
                 legendItem.innerHTML = `
@@ -469,16 +559,26 @@
             
             const ctx = canvas.getContext('2d');
             
-            // Set canvas dimensions
-            canvas.width = canvas.clientWidth * 2;
-            canvas.height = canvas.clientHeight * 2;
+            // Set canvas dimensions based on device pixel ratio
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
             
-            // Calculate chart area
+            // Calculate chart area with responsive margins
+            const margin = {
+                left: rect.width * 0.15,
+                right: rect.width * 0.05,
+                top: rect.height * 0.15,
+                bottom: rect.height * 0.2
+            };
+            
             const chartArea = {
-                left: 60,
-                top: 20,
-                right: canvas.width - 20,
-                bottom: canvas.height - 40
+                left: margin.left,
+                top: margin.top,
+                right: rect.width - margin.right,
+                bottom: rect.height - margin.bottom
             };
             
             const chartWidth = chartArea.right - chartArea.left;
@@ -511,17 +611,22 @@
             ctx.lineTo(chartArea.right, chartArea.bottom);
             ctx.stroke();
             
+            // Calculate font size based on device width
+            const baseFontSize = rect.width < 500 ? 10 : 12;
+            
             // Draw labels
             ctx.fillStyle = '#333';
-            ctx.font = '12px Arial';
+            ctx.font = `${baseFontSize}px Arial`;
             ctx.textAlign = 'center';
             
-            // Draw X-axis labels (dates)
+            // Draw X-axis labels (dates) - adaptive for mobile
             const xStep = chartWidth / (data.labels.length - 1);
+            const skipFactor = Math.ceil(data.labels.length / (rect.width < 500 ? 5 : 10));
+            
             data.labels.forEach((label, i) => {
-                if (i % Math.ceil(data.labels.length / 10) === 0 || i === data.labels.length - 1) {
+                if (i % skipFactor === 0 || i === data.labels.length - 1) {
                     const x = chartArea.left + i * xStep;
-                    ctx.fillText(label, x, chartArea.bottom + 15);
+                    ctx.fillText(label, x, chartArea.bottom + baseFontSize + 5);
                 }
             });
             
@@ -531,7 +636,7 @@
                 const y = chartArea.bottom - i * yStep;
                 const value = minValue + (i / 5) * (maxValue - minValue);
                 ctx.textAlign = 'right';
-                ctx.fillText('$' + value.toFixed(2), chartArea.left - 10, y + 4);
+                ctx.fillText('$' + value.toFixed(2), chartArea.left - 5, y + 4);
                 
                 // Draw grid line
                 ctx.strokeStyle = '#ddd';
@@ -557,7 +662,7 @@
                 if (points.length > 0) {
                     // Draw line
                     ctx.strokeStyle = dataset.borderColor;
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = rect.width < 500 ? 1.5 : 2;
                     ctx.beginPath();
                     ctx.moveTo(points[0].x, points[0].y);
                     
@@ -568,32 +673,40 @@
                     ctx.stroke();
                     
                     // Draw points
+                    const pointRadius = rect.width < 500 ? 2 : 3;
                     points.forEach(point => {
                         ctx.fillStyle = dataset.borderColor;
                         ctx.beginPath();
-                        ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+                        ctx.arc(point.x, point.y, pointRadius, 0, Math.PI * 2);
                         ctx.fill();
                     });
                 }
             });
             
-            // Draw legend
-            const legendY = chartArea.top + 10;
-            let legendX = chartArea.left + 10;
+            // Draw legend - more compact for mobile
+            const legendY = chartArea.top / 2;
+            let legendX = rect.width / 2 - 100;
+            
+            // Center and adjust legend based on screen size
+            if (rect.width < 500) {
+                legendX = chartArea.left;
+                ctx.font = `${baseFontSize - 1}px Arial`;
+            }
             
             data.datasets.forEach((dataset, i) => {
                 const textWidth = ctx.measureText(dataset.label).width;
+                const boxSize = rect.width < 500 ? 8 : 10;
                 
                 // Draw color box
                 ctx.fillStyle = dataset.borderColor;
-                ctx.fillRect(legendX, legendY - 8, 10, 10);
+                ctx.fillRect(legendX, legendY - boxSize + 2, boxSize, boxSize);
                 
                 // Draw label
                 ctx.fillStyle = '#333';
                 ctx.textAlign = 'left';
-                ctx.fillText(dataset.label, legendX + 15, legendY);
+                ctx.fillText(dataset.label, legendX + boxSize + 5, legendY);
                 
-                legendX += textWidth + 40;
+                legendX += textWidth + boxSize + 20;
             });
         }
     </script>
